@@ -6,7 +6,7 @@ class Volatility < Formula
   sha1 "77ae1443062a5103c63377aee6170d6e09ca6354"
   head "https://github.com/volatilityfoundation/volatility.git"
 
-  depends_on :python => :recommended
+  depends_on :python
   depends_on 'yara'
 
   resource 'distorm3' do
