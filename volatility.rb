@@ -6,9 +6,8 @@ class Volatility < Formula
   sha1 "77ae1443062a5103c63377aee6170d6e09ca6354"
   head "https://github.com/volatilityfoundation/volatility.git"
 
-  # depends_on :python
+  depends_on :python => :recommended
   depends_on 'yara'
-  # depends_on 'pillow'
 
   resource 'distorm3' do
     url "https://distorm.googlecode.com/files/distorm3.zip"
@@ -16,8 +15,8 @@ class Volatility < Formula
   end
 
   resource 'pycrypto' do
-    url "https://github.com/dlitz/pycrypto/archive/v2.7a1.tar.gz"
-    sha1 "077feba65e9018df81d11e1a9f703a8b03fc8ec5"
+    url "https://github.com/dlitz/pycrypto/archive/v2.6.1.tar.gz"
+    sha1 "9b7fb7fd9c59624f2db7c1d98f62adde1b85f4c5"
   end
 
   resource 'PIL' do
@@ -35,43 +34,27 @@ class Volatility < Formula
   end
 
   def install
-    ENV['PYTHON_PATH'] = which 'python'
-    system "python setup.py install --prefix=#{prefix}"
+    ENV["PYTHONPATH"] = lib+"python2.7/site-packages"
+    ENV.prepend_create_path 'PYTHONPATH', libexec+'lib/python2.7/site-packages'
 
-    # Language::Python.each_python(build) do |python, version|
-    #
-    #   resource("distorm3").stage do
-    #     system python, "setup.py", "build", "--prefix=#{prefix}"
-    #     system python, "setup.py", "install", "--prefix=#{prefix}"
-    #   end unless package_installed? python, "distorm3"
-    #
-    #   resource("pycrypto").stage do
-    #     system python, "setup.py", "install", "--prefix=#{prefix}"
-    #   end unless package_installed? python, "pycrypto"
-    #
-    #   resource("PIL").stage do
-    #     system python, "setup.py", "install", "--prefix=#{prefix}"
-    #   end unless package_installed? python, "PIL"
-    #
-    #   resource("openpyxl").stage do
-    #     system python, "setup.py", "install", "--prefix=#{prefix}"
-    #   end unless package_installed? python, "openpyxl"
-    #
-    #   #system python, "setup.py", "build"
-    #   system python, "setup.py", "install", "--prefix=#{prefix}"
-    # end
+    res = %w(distorm3 pycrypto PIL openpyxl)
+
+    res.each do |r|
+      unless package_installed?(python, r)
+        resource(r).stage do
+          system "python", "setup.py", "build"
+          system "python", "setup.py", "install", "--prefix=#{libexec}"
+        end
+      end
+    end
+
+    system "python", "setup.py", "install", "--prefix=#{prefix}",
+               '--single-version-externally-managed', '--record=installed.txt'
+
+    bin.env_script_all_files(libexec+'bin', :PYTHONPATH => ENV['PYTHONPATH'])
   end
 
   test do
-    # `test do` will create, run in and delete a temporary directory.
-    #
-    # This test will fail and we won't accept that! It's enough to just replace
-    # "false" with the main program this formula installs, but it'd be nice if you
-    # were more thorough. Run the test with `brew test volatility`. Options passed
-    # to `brew install` such as `--HEAD` also need to be provided to `brew test`.
-    #
-    # The installed folder is not in the path, so use the entire path to any
-    # executables being tested: `system "#{bin}/program", "do", "something"`.
-    system "true"
+    system "#{bin}/vol.py", "--info"
   end
 end
